@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/MMeier05/blog_aggregator/internal/config"
-	"github.com/MMeier05/blog_aggregator/internal/database"
+	"github.com/MMeier05/gator/internal/config"
+	"github.com/MMeier05/gator/internal/database"
 	_ "github.com/lib/pq"
 	"database/sql"
 	"log"
@@ -13,7 +13,6 @@ type state struct {
 	db *database.Queries
 }
 
-const dbURL = "postgres://postgres:postgres@localhost:5432/gator?sslmode=disable"
 
 func main() {
 
@@ -22,7 +21,7 @@ func main() {
 		log.Fatalf("error reading config: %v", err)
 	}
 
-	db, err := sql.Open("postgres", dbURL)
+	db, err := sql.Open("postgres", conf.DbUrl)
 	if err != nil {
 		log.Fatalf("error connecting to db: %v", err)
 	}

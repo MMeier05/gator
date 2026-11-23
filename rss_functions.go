@@ -9,7 +9,7 @@ import (
 	"html"
 	"database/sql"
 	"strings"
-	"github.com/MMeier05/blog_aggregator/internal/database"
+	"github.com/MMeier05/gator/internal/database"
 	"github.com/google/uuid"
 )
 

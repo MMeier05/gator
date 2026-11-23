@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/MMeier05/blog_aggregator/internal/database"
+	"github.com/MMeier05/gator/internal/database"
 	"github.com/google/uuid"
 	"time"
 	"context"
@@ -11,16 +11,19 @@ import (
 	
 )
 func handlerBrowse(s *state, cmd command, user database.User) error {
+	var limit string
 	if len(cmd.args) < 1 {
-	cmd.args[0] = "2"
+		limit = "2"
+	} else {
+		limit = cmd.args[0]
 	}
-	limit, err := strconv.Atoi(cmd.args[0])
+	parsedLimit, err := strconv.Atoi(limit)
 	if err != nil {
 		return err
 	}
 	posts, err := s.db.GetPostsFromUser(context.Background(), database.GetPostsFromUserParams{
 		UserID: user.ID,
-		Limit: int32(limit),
+		Limit: int32(parsedLimit),
 	},
 		)
 	for _, post := range posts {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/MMeier05/blog_aggregator/internal/database"
+	"github.com/MMeier05/gator/internal/database"
 	"context"
 )
 

@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/MMeier05/blog_aggregator/internal/database"
+	"github.com/MMeier05/gator/internal/database"
 	"github.com/google/uuid"
 	"time"
 	"context"
