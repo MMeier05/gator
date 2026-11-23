@@ -24,7 +24,7 @@ Commands Available:
 
 1. Install using go install:
     ```bash
-    go install https://github.com/MMeier05/habit_tracker.git
+    go install github.com/MMeier05/gator@latest
     ```
 2. Install Postgres v15 or later:
     ###Linux/WSL (Debian)
