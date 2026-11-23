@@ -41,7 +41,11 @@ Commands Available:
     ```bash
     brew install postgresql@15
     ```
-3. Add a .gatorconfig file in your home directory.
+3. Install goose:
+    ```bash
+    go install github.com/pressly/goose/v3/cmd/goose@latest
+    ```
+4. Add a .gatorconfig file in your home directory.
     ```bash
     cd ~ 
     touch .gatorconfig.json
@@ -52,4 +56,7 @@ Commands Available:
     }
     ''' > .gatorconfig.json
     ```
-
+5. Migrate to the lastest database version
+    ```bash
+    goose postgres "postgres://postgres:postgres@localhost:5432/gator" up
+    ```
