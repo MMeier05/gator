@@ -7,8 +7,6 @@ import (
 	"github.com/google/uuid"
 	"time"
 	"context"
-	"database/sql"
-	"strings"
 	"strconv"
 	
 )
@@ -47,60 +45,6 @@ func handlerAgg(s *state, cmd command, user database.User) error {
 		return err
 		}
 	}
-}
-
-func scrapeFeeds(s *state, user database.User) error {
-	nextFeed, err := s.db.GetNextFeedToFetch(context.Background(), user.ID)
-	if err != nil {
-	return err
-	}
-	err = s.db.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{ 
-				ID: nextFeed.ID,
-				LastFetchedAt: sql.NullTime{
-				Time: time.Now(),
-				Valid: true,
-			},
-		},
-	)
-	if err != nil {
-	return err
-	}
-	feed, err := fetchFeed(context.Background(), nextFeed.Url)
-	if err != nil {
-		return err
-	}
-	for _, feedItem := range feed.Channel.Item {
-		parsedPubDate, err := time.Parse(time.RFC1123Z, feedItem.PubDate)
-		pubDateStruct := sql.NullTime{
-			Time: parsedPubDate,
-			Valid: true,
-		}
-		if err != nil {
-			pubDateStruct.Valid = false
-		}
-		
-		_, err = s.db.CreatePost(context.Background(), database.CreatePostParams{
-			ID: uuid.New(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			Title: feedItem.Title,
-			Url: feedItem.Link,
-			Description: sql.NullString{
-				String: feedItem.Description,
-				Valid: true,
-			},
-			PublishedAt: pubDateStruct,
-			FeedID: nextFeed.ID, 
-		},
-			)
-		if err != nil {
-			if strings.Contains(err.Error(), "duplicate key value") {
-			continue
-			}
-			return err
-		}
-	}
-	return nil
 }
 
 func handlerAddFeed(s *state, cmd command, user database.User) error {
