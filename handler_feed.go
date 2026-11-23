@@ -7,14 +7,99 @@ import (
 	"github.com/google/uuid"
 	"time"
 	"context"
+	"database/sql"
+	"strings"
+	"strconv"
+	
 )
-
-func handlerAgg(s *state, cmd command) error {
-	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	if len(cmd.args) < 1 {
+	cmd.args[0] = "2"
+	}
+	limit, err := strconv.Atoi(cmd.args[0])
 	if err != nil {
 		return err
 	}
-	fmt.Print(feed)
+	posts, err := s.db.GetPostsFromUser(context.Background(), database.GetPostsFromUserParams{
+		UserID: user.ID,
+		Limit: int32(limit),
+	},
+		)
+	for _, post := range posts {
+		fmt.Printf("* %s (%s)\n", post.Title, post.Url)
+	}
+	return nil
+}
+
+func handlerAgg(s *state, cmd command, user database.User) error {
+	if len(cmd.args) < 1 {
+		return errors.New("usage: <duration>")
+	}
+	duration, err := time.ParseDuration(cmd.args[0])
+	if err != nil {
+	return err
+	}
+	fmt.Printf("Collecting feeds every %v", duration)
+	ticker := time.NewTicker(duration)
+	for ; ; <-ticker.C {
+		err := scrapeFeeds(s, user)
+		if err != nil {
+		return err
+		}
+	}
+}
+
+func scrapeFeeds(s *state, user database.User) error {
+	nextFeed, err := s.db.GetNextFeedToFetch(context.Background(), user.ID)
+	if err != nil {
+	return err
+	}
+	err = s.db.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{ 
+				ID: nextFeed.ID,
+				LastFetchedAt: sql.NullTime{
+				Time: time.Now(),
+				Valid: true,
+			},
+		},
+	)
+	if err != nil {
+	return err
+	}
+	feed, err := fetchFeed(context.Background(), nextFeed.Url)
+	if err != nil {
+		return err
+	}
+	for _, feedItem := range feed.Channel.Item {
+		parsedPubDate, err := time.Parse(time.RFC1123Z, feedItem.PubDate)
+		pubDateStruct := sql.NullTime{
+			Time: parsedPubDate,
+			Valid: true,
+		}
+		if err != nil {
+			pubDateStruct.Valid = false
+		}
+		
+		_, err = s.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID: uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			Title: feedItem.Title,
+			Url: feedItem.Link,
+			Description: sql.NullString{
+				String: feedItem.Description,
+				Valid: true,
+			},
+			PublishedAt: pubDateStruct,
+			FeedID: nextFeed.ID, 
+		},
+			)
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value") {
+			continue
+			}
+			return err
+		}
+	}
 	return nil
 }
 
